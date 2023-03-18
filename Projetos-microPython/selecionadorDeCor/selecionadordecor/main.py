@@ -16,40 +16,40 @@ from pybricks.ev3devices import Motor, TouchSensor, ColorSensor
 from pybricks.parameters import Port, Button, Color, ImageFile, SoundFile
 from pybricks.tools import wait
 
-# The colored objects are either red, green, blue, or yellow.
+# Os objetos coloridos são vermelhos, verdes, azuis ou amarelos.
 POSSIBLE_COLORS = [Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW]
 
-# Initialize the EV3 brick.
+# Inicialize o bloco EV3.
 ev3 = EV3Brick()
 
-# Initialize the motors that drive the conveyor belt and eject the objects.
+# Inicializar os motores que acionam a esteira e ejetar os objetos.
 belt_motor = Motor(Port.D)
 feed_motor = Motor(Port.A)
 
-# Initialize the Touch Sensor. It is used to detect when the belt motor has
-# moved the sorter module all the way to the left.
+# Inicialize o sensor de toque. É usado para detectar quando o motor da correia
+# moveu o módulo classificador totalmente para a esquerda.
 touch_sensor = TouchSensor(Port.S1)
 
-# Initialize the Color Sensor. It is used to detect the color of the objects.
+# Inicialize o sensor de cor. É usado para detectar a cor dos objetos.
 color_sensor = ColorSensor(Port.S3)
 
 
-# This is the main loop. It waits for you to scan and insert 8 colored objects.
-# Then it sorts them by color. Then the process starts over and you can scan
-# and insert the next set of colored objects.
+# Este é o loop principal. Ele espera que você escaneie e insira 8 objetos coloridos.
+# Em seguida, ele os classifica por cor. Em seguida, o processo recomeça e você pode digitalizar
+# e insira o próximo conjunto de objetos coloridos.
 while True:
-    # Get the feed motor in the correct starting position.
-    # This is done by running the motor forward until it stalls. This
-    # means that it cannot move any further. From this end point, the motor
-    # rotates backward by 180 degrees. Then it is in the starting position.
+    # Coloque o motor de alimentação na posição inicial correta.
+     # Isso é feito girando o motor para frente até que ele pare. Esse
+     # significa que ele não pode se mover mais. A partir deste ponto final, o motor
+     # gira para trás em 180 graus. Então está na posição inicial.
     feed_motor.run_until_stalled(120, duty_limit=50)
     feed_motor.run_angle(450, -200)
 
-    # Get the conveyor belt motor in the correct starting position.
-    # This is done by first running the belt motor backward until the
-    # touch sensor becomes pressed. Then the motor stops, and the the angle is
-    # reset to zero. This means that when it rotates backward to zero later
-    # on, it returns to this starting position.
+    # Coloque o motor da correia transportadora na posição inicial correta.
+     # Isso é feito rodando primeiro o motor da correia para trás até que o
+     # sensor de toque é pressionado. Então o motor para, e o ângulo é
+     # redefinir para zero. Isso significa que quando ele gira para trás para zero mais tarde
+     # Acesso, ele retorna a esta posição inicial.
     belt_motor.run(-500)
     while not touch_sensor.pressed():
         pass
@@ -57,63 +57,62 @@ while True:
     wait(1000)
     belt_motor.reset_angle(0)
 
-    # When we scan the objects, we store all the color numbers in a list.
-    # We start with an empty list. It will grow as we add colors to it.
+    # Quando digitalizamos os objetos, armazenamos todos os números de cores em uma lista.
+     # Começamos com uma lista vazia. Ele crescerá à medida que adicionarmos cores a ele.
     color_list = []
 
-    # This loop scans the colors of the objects. It repeats until 8 objects
-    # are scanned and placed in the chute. This is done by repeating the loop
-    # while the length of the list is still less than 8.
+    # Este loop escaneia as cores dos objetos. Repete até 8 objetos
+     # são escaneados e colocados no chute. Isso é feito repetindo o loop
+     # enquanto o comprimento da lista ainda for menor que 8.
     while len(color_list) < 8:
-        # Show an arrow that points to the color sensor.
+        # Mostra uma seta que aponta para o sensor de cores.
         ev3.screen.load_image(ImageFile.RIGHT)
 
-        # Show how many colored objects we have already scanned.
+        # Mostra quantos objetos coloridos já digitalizamos.
         ev3.screen.print(len(color_list))
 
-        # Wait for the center button to be pressed or a color to be scanned.
+        # Aguarde até que o botão central seja pressionado ou uma cor seja digitalizada.
         while True:
-            # Store True if the center button is pressed or False if not.
+            # Store True se o botão central for pressionado ou False se não for.
             pressed = Button.CENTER in ev3.buttons.pressed()
-            # Store the color measured by the Color Sensor.
+            # Armazene a cor medida pelo sensor de cor.
             color = color_sensor.color()
-            # If the center button is pressed or a color is detected,
-            # break out of the loop.
+            # Se o botão central for pressionado ou uma cor for detectada,
+             # sair do loop.
             if pressed or color in POSSIBLE_COLORS:
                 break
 
         if pressed:
-            # If the button was pressed, end the loop early. We will no longer
-            # wait for any remaining objects to be scanned and added to the
-            # chute.
+            # Se o botão foi pressionado, finalize o loop antecipadamente. nós não iremos mais
+             # espera que quaisquer objetos restantes sejam verificados e adicionados a calha.
             break
 
-        # Otherwise, a color was scanned. So we add (append) it to the list.
+        # Caso contrário, uma cor foi digitalizada. Portanto, adicionamos (acrescentamos) à lista.
         ev3.speaker.beep(1000, 100)
         color_list.append(color)
 
-        # We don't want to register the same color once more if we're still
-        # looking at the same object. So before we continue, we wait until the
-        # sensor no longer sees the object.
+        # Não queremos registrar a mesma cor mais uma vez se ainda estivermos
+         # olhando para o mesmo objeto. Portanto, antes de continuarmos, esperamos até que o
+         # sensor não vê mais o objeto.
         while color_sensor.color() in POSSIBLE_COLORS:
             pass
         ev3.speaker.beep(2000, 100)
 
-        # Show an arrow pointing to the center button, to ask if we are done.
+        # Mostrar uma seta apontando para o botão central, para perguntar se terminamos.
         ev3.screen.load_image(ImageFile.BACKWARD)
         wait(2000)
 
-    # Play a sound and show an image to indicate that we are done scanning.
+    # Toque um som e mostre uma imagem para indicar que terminamos a digitalização.
     ev3.speaker.play_file(SoundFile.READY)
     ev3.screen.load_image(ImageFile.EV3)
 
-    # Now sort the bricks according the list of colors that we stored.
-    # We do this by going over each color in the list in a loop.
+    # Agora classifique os tijolos de acordo com a lista de cores que armazenamos.
+     # Fazemos isso examinando cada cor na lista em um loop.
     for color in color_list:
-        # Wait for one second between each sorting action.
+        # Aguarde um segundo entre cada ação de classificação.
         wait(1000)
 
-        # Run the conveyor belt motor to the right position based on the color.
+        # Execute o motor da correia transportadora para a posição correta com base na cor.
         if color == Color.BLUE:
             ev3.speaker.say('blue')
             belt_motor.run_target(500, 10)
@@ -127,7 +126,6 @@ while True:
             ev3.speaker.say('red')
             belt_motor.run_target(500, 530)
 
-        # Now that the conveyor belt is in the correct position, eject the
-        # colored object.
+        # Agora que a correia transportadora está na posição correta, ejete o objeto colorido.
         feed_motor.run_angle(1500, 180)
         feed_motor.run_angle(1500, -180)
